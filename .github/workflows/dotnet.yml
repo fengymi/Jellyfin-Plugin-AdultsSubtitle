@@ -1,77 +1,66 @@
 # This workflow will build a .NET project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
 
-name: 打包插件
+name: .NET
 
 on:
-  workflow_dispatch: ## 手动临时执行
   push:
-    tags: 
+    tags:
       - "v*"
-
-env:
-  dotnet-version: 8.0.x
-  python-version: 3.8
-
 
 jobs:
   build:
     name: build
     runs-on: windows-latest
-  
+    
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: ${{ env.dotnet-version }}
-    - name: Setup python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.python-version }}
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
 
-    - name: Publish
-      run: dotnet publish --configuration Release --output bin
-           
-    - name: Publish Emby
-      run: dotnet publish --configuration Release.Emby --output bin.Emby
-      
-    - name: Package
-      id: create_package
-      shell: bash
-      run: |
-        tag=$(git describe --tags --always)
-        release_name="${tag}"
-        emby_release_name="Emby_${tag}"
+      - name: Publish
+        run: dotnet publish --configuration Release --output bin
 
-        # Pack files
-        7z a -tzip "${release_name}.zip" "./bin/*"
-        echo "::set-output name=release_name::${release_name}"
-        echo "::set-output name=release_tag::${tag}"
-        echo "::set-output name=filename::${release_name}.zip"
-        echo "zip_filename=${release_name}.zip" >> $GITHUB_OUTPUT
+      - name: Publish Emby
+        run: dotnet publish --configuration Release.Emby --output bin.Emby
 
-        7z a -tzip "${emby_release_name}.zip" "./bin.Emby/*"
-        echo "::set-output name=emby_release_name::${emby_release_name}"
-        echo "::set-output name=emby_release_name::${tag}"
-        echo "::set-output name=emby_filename::${emby_release_name}.zip"
+      - name: Package
+        id: create_package
+        shell: bash
+        run: |
+          tag=$(git describe --tags --always)
+          release_name="AdultsSubtitle_${tag}"
+          emby_release_name="AdultsSubtitle_Emby_${tag}"
+          
+          # Pack files
+          7z a -tzip "${release_name}.zip" "./bin/*"
+          echo "::set-output name=release_name::${release_name}"
+          echo "::set-output name=release_tag::${tag}"
+          echo "::set-output name=filename::${release_name}.zip"
+          
+          7z a -tzip "${emby_release_name}.zip" "./bin.Emby/*"
+          echo "::set-output name=emby_release_name::${emby_release_name}"
+          echo "::set-output name=emby_release_name::${tag}"
+          echo "::set-output name=filename::${emby_release_name}.zip"
 
-    - uses: "marvinpinto/action-automatic-releases@latest"
-      with:
-        repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        name: "${{ steps.create_package.outputs.release_tag }}"
-        automatic_release_tag: "${{ steps.create_package.outputs.release_tag }}"
-        prerelease: false
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          name: "${{ steps.create_package.outputs.release_tag }}"
+          automatic_release_tag: "${{ steps.create_package.outputs.release_tag }}"
+          prerelease: false
           #          "${{ steps.create_package.outputs.filename }}"
-        files: |
-          *.zip
+          files: |
+            *.zip
+      - name: Update Manifest
+        shell: cmd
+        run: Manifest.exe ${{ steps.create_package.outputs.release_tag }}
 
-    - name: Update Manifest
-      run: python3 ./scripts/generate_manifest.py "./${{steps.create_package.outputs.filename}}" ${{ steps.create_package.outputs.release_tag }}
-      
-    - name: Commit & Push changes
-      uses: stefanzweifel/git-auto-commit-action@v5
-      with:
-        branch: master
-        commit_message: update manifest.json
+      - name: Commit & Push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          branch: master
+          commit_message: update manifest.json
       
