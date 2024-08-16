@@ -35,11 +35,11 @@
 
 ### 使用
 
-- jellyfin 10.8.13
+- jellyfin 10.9.0
 - jellyfin 插件存储库添加源
 
 ```
-https://raw.githubusercontent.com/fallingrust/Jellyfin-Plugin-AdultsSubtitle/master/manifest.json
+https://raw.githubusercontent.com/fengymi/Jellyfin-Plugin-AdultsSubtitle/master/manifest.json
 ```
 
 - jellyfin 插件目录中安装最新版本
