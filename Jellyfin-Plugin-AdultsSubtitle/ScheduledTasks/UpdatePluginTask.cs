@@ -79,7 +79,7 @@ namespace Jellyfin_Plugin_AdultsSubtitle.ScheduledTasks
         private async Task<(Version,string)?> GetLatestVersionAsync(CancellationToken cancellationToken)
         {
             using var httpClient = _httpClientFactory.CreateClient();
-            var response = await httpClient.GetAsync("https://raw.githubusercontent.com/fallingrust/Jellyfin-Plugin-AdultsSubtitle/master/manifest.json", cancellationToken);
+            var response = await httpClient.GetAsync("https://raw.githubusercontent.com/fengymi/Jellyfin-Plugin-AdultsSubtitle/master/manifest.json", cancellationToken);
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
             var packInfo = JsonSerializer.Deserialize<List<PackageInfo>>(content)?.FirstOrDefault();
             if (packInfo != null)
