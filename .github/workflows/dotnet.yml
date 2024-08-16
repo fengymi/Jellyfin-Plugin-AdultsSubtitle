@@ -1,12 +1,18 @@
 # This workflow will build a .NET project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
 
-name: .NET
+name: 打包插件
 
 on:
+  workflow_dispatch: ## 手动临时执行
   push:
     tags: 
       - "v*"
+
+env:
+  dotnet-version: 8.0.x
+  python-version: 3.8
+
 
 jobs:
   build:
@@ -18,7 +24,11 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: ${{ env.dotnet-version }}
+    - name: Setup python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.python-version }}
 
     - name: Publish
       run: dotnet publish --configuration Release --output bin
@@ -31,19 +41,20 @@ jobs:
       shell: bash
       run: |
         tag=$(git describe --tags --always)
-        release_name="AdultsSubtitle_${tag}"
-        emby_release_name="AdultsSubtitle_Emby_${tag}"
+        release_name="${tag}"
+        emby_release_name="Emby_${tag}"
 
         # Pack files
         7z a -tzip "${release_name}.zip" "./bin/*"
         echo "::set-output name=release_name::${release_name}"
         echo "::set-output name=release_tag::${tag}"
         echo "::set-output name=filename::${release_name}.zip"
+        echo "zip_filename=${release_name}.zip" >> $GITHUB_OUTPUT
 
         7z a -tzip "${emby_release_name}.zip" "./bin.Emby/*"
         echo "::set-output name=emby_release_name::${emby_release_name}"
         echo "::set-output name=emby_release_name::${tag}"
-        echo "::set-output name=filename::${emby_release_name}.zip"
+        echo "::set-output name=emby_filename::${emby_release_name}.zip"
 
     - uses: "marvinpinto/action-automatic-releases@latest"
       with:
@@ -54,9 +65,9 @@ jobs:
           #          "${{ steps.create_package.outputs.filename }}"
         files: |
           *.zip
+
     - name: Update Manifest
-      shell: cmd
-      run: Manifest.exe ${{ steps.create_package.outputs.release_tag }}
+      run: python3 ./scripts/generate_manifest.py "./${{steps.create_package.outputs.filename}}" ${{ steps.create_package.outputs.release_tag }}
       
     - name: Commit & Push changes
       uses: stefanzweifel/git-auto-commit-action@v5
