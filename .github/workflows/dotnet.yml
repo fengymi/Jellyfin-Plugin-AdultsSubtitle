@@ -50,7 +50,7 @@ jobs:
         echo "::set-output name=release_tag::${tag}"
         echo "::set-output name=filename::${release_name}.zip"
         echo "::set-env name=zip_filename::${release_name}.zip"
-
+        echo "zip_filename=${release_name}.zip" >> $GITHUB_OUTPUT
 
         7z a -tzip "${emby_release_name}.zip" "./bin.Emby/*"
         echo "::set-output name=emby_release_name::${emby_release_name}"
@@ -68,7 +68,7 @@ jobs:
           *.zip
 
     - name: Update Manifest
-      run: python3 ./scripts/generate_manifest.py ./${{env.filename}} ${GITHUB_REF#refs/*/}
+      run: python3 ./scripts/generate_manifest.py ./${{env.zip_filename}} ${GITHUB_REF#refs/*/}
       
     - name: Commit & Push changes
       uses: stefanzweifel/git-auto-commit-action@v5
