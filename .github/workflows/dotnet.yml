@@ -49,7 +49,6 @@ jobs:
         echo "::set-output name=release_name::${release_name}"
         echo "::set-output name=release_tag::${tag}"
         echo "::set-output name=filename::${release_name}.zip"
-        echo "::set-env name=zip_filename::${release_name}.zip"
         echo "zip_filename=${release_name}.zip" >> $GITHUB_OUTPUT
 
         7z a -tzip "${emby_release_name}.zip" "./bin.Emby/*"
